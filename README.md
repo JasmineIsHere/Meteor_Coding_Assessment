@@ -48,3 +48,21 @@ GO111MODULE=on go get -u -t github.com/volatiletech/sqlboiler/v4
 GO111MODULE=on go get github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql
 ```
 2. Run command: `sqlboiler -c sqlboiler.toml --wipe mysql`
+
+### Task 5: List the households and qualifying family members
+#### Assumptions Made:
+1. Student Encouragement Bonus <br>
+   **ASSUMPTION 1:** ELIGIBILITY = (at least one member whose occupationType = "Student" AND age > 16 years) AND total household income < 200,000 <br>
+   **ASSUMPTION 2:** a person's age depends on whether a person's birthday has passed <br>
+   **ASSUMPTION 3:** Households incomes of less than $200,000 refers to the family's total annual income <br>
+<br>
+2. Multigeneration Scheme <br>
+   **ASSUMPTION 1**: ELIGIBILITY = at least ONE member whose age is < 18 or > 55 which will make everyone in the household qualified <br>
+   **ASSUMPTION 2**: Households incomes of less than $150,000 refers to the family's total annual income <br>
+<br>
+3. Elder Bonus <br>
+<br>
+4. Baby Sunshine Grant <br>
+<br>
+5. YOLO GST Grant <br>
+   **ASSUMPTION 1**: Households incomes of less than $100,000 refers to the family's total annual income
