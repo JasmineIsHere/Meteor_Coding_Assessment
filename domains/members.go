@@ -6,7 +6,7 @@ import (
 	"github.com/volatiletech/null/v8"
 )
 
-type NewMemberReq struct {
+type Member struct {
 	Name           string    `json:"name"`
 	Gender         string    `json:"gender"`
 	MaritalStatus  string    `json:"marital_status"`

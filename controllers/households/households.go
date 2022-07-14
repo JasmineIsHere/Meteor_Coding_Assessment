@@ -31,12 +31,13 @@ func NewHandler(householdDAO daos.HouseholdsDAO, membersDAO daos.MembersDAO) *ho
 
 func (h *householdHandler) RouteGroup(r *gin.Engine) {
 	rg := r.Group("/households")
+	rg.GET("/all", h.getAll)
 	rg.POST("/", h.create)
 	rg.POST("/:householdID", h.addMember)
 }
 
 func (h *householdHandler) create(c *gin.Context) {
-	newHousehold := domains.NewHouseholdReq{}
+	newHousehold := domains.Household{}
 	if err := c.BindJSON(&newHousehold); err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadRequest, c.Errors.Last())
@@ -56,7 +57,7 @@ func (h *householdHandler) addMember(c *gin.Context) {
 	householdIDUint64, _ := strconv.ParseUint(c.Param("householdID"), 10, 64)
 	householdID := uint(householdIDUint64)
 
-	newMember := domains.NewMemberReq{}
+	newMember := domains.Member{}
 	if err := c.BindJSON(&newMember); err != nil {
 		c.Error(err)
 		c.JSON(http.StatusBadRequest, c.Errors.Last())
@@ -90,8 +91,49 @@ func (h *householdHandler) addMember(c *gin.Context) {
 
 	// update spouse
 	if spouse != nil {
-		h.membersDAO.UpdateSpouse(boil.GetDB(), spouse, member.ID)
+		_, err := h.membersDAO.UpdateSpouse(boil.GetDB(), spouse, member.ID)
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusBadRequest, c.Errors.Last())
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": fmt.Sprintf("Member successfully added to household with id = %v", householdID)})
+}
+
+func (h *householdHandler) getAll(c *gin.Context) {
+	householdSlice, err := h.householdsDAO.GetAll(boil.GetDB())
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	var households []domains.HouseholdsResp
+	for _, household := range *householdSlice {
+		var members []domains.Member
+		memberSlice, err := h.membersDAO.GetByHouseholdID(boil.GetDB(), household.ID)
+		if err != nil {
+			c.Error(err)
+			c.JSON(http.StatusNotFound, c.Errors.Last())
+			return
+		}
+		for _, member := range *memberSlice {
+			members = append(members, domains.Member{
+				Name:           member.Name,
+				Gender:         member.Gender,
+				MaritalStatus:  member.MaritalStatus,
+				SpouseID:       member.SpouseID,
+				OccupationType: member.OccupationType,
+				AnnualIncome:   member.AnnualIncome,
+				DOB:            member.Dob,
+			})
+		}
+		households = append(households, domains.HouseholdsResp{
+			Type:    household.Type,
+			Members: members,
+		})
+	}
+	c.JSON(http.StatusOK, households)
 }

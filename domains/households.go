@@ -1,5 +1,10 @@
 package domains
 
-type NewHouseholdReq struct {
+type Household struct {
 	Type string `json:"type"`
+}
+
+type HouseholdsResp struct {
+	Type    string   `json:"type"`
+	Members []Member `json:"family_members"`
 }

@@ -8,7 +8,8 @@ import (
 )
 
 type HouseholdsDAO interface {
-	AddHousehold(exec boil.Executor, householdDomain *domains.NewHouseholdReq) error
+	AddHousehold(exec boil.Executor, householdDomain *domains.Household) error
+	GetAll(exec boil.Executor) (*models.HouseholdSlice, error)
 	GetByID(exec boil.Executor, householdID uint) (*models.Household, error)
 }
 
@@ -18,7 +19,7 @@ func NewHouseholdsDAO() *householdsDAO {
 	return &householdsDAO{}
 }
 
-func (dao *householdsDAO) AddHousehold(exec boil.Executor, householdDomain *domains.NewHouseholdReq) error {
+func (dao *householdsDAO) AddHousehold(exec boil.Executor, householdDomain *domains.Household) error {
 	household := &models.Household{
 		Type: householdDomain.Type,
 	}
@@ -26,6 +27,14 @@ func (dao *householdsDAO) AddHousehold(exec boil.Executor, householdDomain *doma
 		return err
 	}
 	return nil
+}
+
+func (dao *householdsDAO) GetAll(exec boil.Executor) (*models.HouseholdSlice, error) {
+	householdSlice, err := models.Households().All(exec)
+	if err != nil {
+		return nil, err
+	}
+	return &householdSlice, nil
 }
 
 func (dao *householdsDAO) GetByID(exec boil.Executor, householdID uint) (*models.Household, error) {
