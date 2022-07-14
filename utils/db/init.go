@@ -25,7 +25,7 @@ func init() {
 		DBHost:     "the-db.c5balohade6x.ap-southeast-1.rds.amazonaws.com",
 		DBUser:     "admin",
 		DBPassword: "taptaptap",
-		DBName:     "estl",
+		DBName:     "meteor",
 	}
 	dbInfo := fmt.Sprintf("%s:%s@(%s)/%s?loc=UTC&charset=utf8mb4,utf8&parseTime=True", conf.DBUser, conf.DBPassword, conf.DBHost, conf.DBName)
 

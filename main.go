@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+	"starryProject/controllers/households"
+	"starryProject/daos"
 	_ "starryProject/utils/db"
 
 	"github.com/gin-gonic/gin"
@@ -15,5 +17,8 @@ func main() {
 		})
 	})
 
+	householdsDAO := daos.NewHouseholdsDAO()
+
+	households.NewHandler(householdsDAO).RouteGroup(r)
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
