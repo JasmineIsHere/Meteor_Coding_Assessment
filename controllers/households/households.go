@@ -39,7 +39,7 @@ func (h *householdHandler) RouteGroup(r *gin.Engine) {
 
 	rgGrants := r.Group("/grants")
 	rgGrants.GET("/seb", h.seb) // Student Encouragement Bonus
-	// rgGrants.GET("/mgs", h.mgs)   // Multi-Generation Scheme
+	rgGrants.GET("/mgs", h.mgs) // Multi-Generation Scheme
 	// rgGrants.GET("/eb", h.eb)     // Elder Bonus
 	// rgGrants.GET("/bsg", h.bsg)   // Baby Sunshine Grant
 	// rgGrants.GET("/yolo", h.yolo) // YOLO GST Grant
@@ -157,7 +157,11 @@ func (h *householdHandler) seb(c *gin.Context) {
 
 	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
-		households = append(households, *domains.HouseholdModelsToHouseholdResp(*household))
+		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, cutoffDate, "<"))
 	}
 	c.JSON(http.StatusOK, households)
+}
+
+func (h *householdHandler) mgs(c *gin.Context) {
+
 }
