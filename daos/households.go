@@ -5,12 +5,14 @@ import (
 	"starryProject/models"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type HouseholdsDAO interface {
 	AddHousehold(exec boil.Executor, householdDomain *domains.Household) error
 	GetAll(exec boil.Executor) (*models.HouseholdSlice, error)
 	GetByID(exec boil.Executor, householdID uint) (*models.Household, error)
+	// GetSEB(cutoffDate time.Time, cutoffIncome int) (*models.Household, error)
 }
 
 type householdsDAO struct{}
@@ -30,7 +32,8 @@ func (dao *householdsDAO) AddHousehold(exec boil.Executor, householdDomain *doma
 }
 
 func (dao *householdsDAO) GetAll(exec boil.Executor) (*models.HouseholdSlice, error) {
-	householdSlice, err := models.Households().All(exec)
+	householdSlice, err := models.Households(
+		qm.Load(models.HouseholdRels.Members)).All(exec)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +41,9 @@ func (dao *householdsDAO) GetAll(exec boil.Executor) (*models.HouseholdSlice, er
 }
 
 func (dao *householdsDAO) GetByID(exec boil.Executor, householdID uint) (*models.Household, error) {
-	household, err := models.Households(models.HouseholdWhere.ID.EQ(householdID)).One(exec)
+	household, err := models.Households(
+		qm.Load(models.HouseholdRels.Members),
+		models.HouseholdWhere.ID.EQ(householdID)).One(exec)
 	if err != nil {
 		return nil, err
 	}

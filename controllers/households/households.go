@@ -35,6 +35,13 @@ func (h *householdHandler) RouteGroup(r *gin.Engine) {
 	rg.GET("/:householdID", h.getByID)
 	rg.POST("/", h.create)
 	rg.POST("/:householdID", h.addMember)
+
+	rgGrants := r.Group("/grants")
+	rgGrants.GET("/seb", h.seb) // Student Encouragement Bonus
+	// rgGrants.GET("/mgs", h.mgs)   // Multi-Generation Scheme
+	// rgGrants.GET("/eb", h.eb)     // Elder Bonus
+	// rgGrants.GET("/bsg", h.bsg)   // Baby Sunshine Grant
+	// rgGrants.GET("/yolo", h.yolo) // YOLO GST Grant
 }
 
 func (h *householdHandler) create(c *gin.Context) {
@@ -113,28 +120,7 @@ func (h *householdHandler) getAll(c *gin.Context) {
 
 	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
-		var members []domains.Member
-		memberSlice, err := h.membersDAO.GetByHouseholdID(boil.GetDB(), household.ID)
-		if err != nil {
-			c.Error(err)
-			c.JSON(http.StatusNotFound, c.Errors.Last())
-			return
-		}
-		for _, member := range *memberSlice {
-			members = append(members, domains.Member{
-				Name:           member.Name,
-				Gender:         member.Gender,
-				MaritalStatus:  member.MaritalStatus,
-				SpouseID:       member.SpouseID,
-				OccupationType: member.OccupationType,
-				AnnualIncome:   member.AnnualIncome,
-				DOB:            member.Dob,
-			})
-		}
-		households = append(households, domains.HouseholdResp{
-			Type:    household.Type,
-			Members: members,
-		})
+		households = append(households, *domains.HouseholdModelsToHouseholdResp(*household))
 	}
 	c.JSON(http.StatusOK, households)
 }
@@ -150,28 +136,17 @@ func (h *householdHandler) getByID(c *gin.Context) {
 		return
 	}
 
-	memberSlice, err := h.membersDAO.GetByHouseholdID(boil.GetDB(), householdID)
-	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusNotFound, c.Errors.Last())
-		return
-	}
-	var members []domains.Member
-	for _, member := range *memberSlice {
-		members = append(members, domains.Member{
-			Name:           member.Name,
-			Gender:         member.Gender,
-			MaritalStatus:  member.MaritalStatus,
-			SpouseID:       member.SpouseID,
-			OccupationType: member.OccupationType,
-			AnnualIncome:   member.AnnualIncome,
-			DOB:            member.Dob,
-		})
-	}
-
-	householdResp := domains.HouseholdResp{
-		Type:    household.Type,
-		Members: members,
-	}
+	householdResp := domains.HouseholdModelsToHouseholdResp(*household)
 	c.JSON(http.StatusOK, householdResp)
+}
+
+func (h *householdHandler) seb(c *gin.Context) {
+	// ASSUMPTION: ELIGIBILITY = (at least one member whose occupationType = "Student" AND age > 16 years) AND total household income < 200,000
+	// ASSUMPTION: a person's age depends on whether a person's birthday has passed
+	// year, month, day := time.Now().Date()
+	// cutoffDate := time.Date(year-16, month, day, 0, 0, 0, 0, time.Local)
+	//
+	// cutoffIncome := 200000
+	// h.householdsDAO.GetSEB(cutoffDate, cutoffIncome)
+
 }
