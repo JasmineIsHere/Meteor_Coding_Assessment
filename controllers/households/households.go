@@ -43,7 +43,7 @@ func (h *householdHandler) RouteGroup(r *gin.Engine) {
 	rgGrants.GET("/seb", h.seb) // Student Encouragement Bonus
 	rgGrants.GET("/mgs", h.mgs) // Multi-Generation Scheme
 	rgGrants.GET("/eb", h.eb)   // Elder Bonus
-	// rgGrants.GET("/bsg", h.bsg)   // Baby Sunshine Grant
+	rgGrants.GET("/bsg", h.bsg) // Baby Sunshine Grant
 	// rgGrants.GET("/yolo", h.yolo) // YOLO GST Grant
 }
 
@@ -198,6 +198,23 @@ func (h *householdHandler) eb(c *gin.Context) {
 	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
 		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, null.Time{}, null.TimeFrom(maxDate), null.Bool{}))
+	}
+	c.JSON(http.StatusOK, households)
+}
+
+func (h *householdHandler) bsg(c *gin.Context) {
+	year, month, day := time.Now().Date()
+	minDate := time.Date(year, month-8, day, 0, 0, 0, 0, time.Local)
+	householdSlice, err := h.householdsDAO.GetBSG(boil.GetDB(), minDate)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	var households []domains.HouseholdResp
+	for _, household := range *householdSlice {
+		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, null.TimeFrom(minDate), null.Time{}, null.Bool{}))
 	}
 	c.JSON(http.StatusOK, households)
 }
