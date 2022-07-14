@@ -8,6 +8,7 @@ import (
 	"starryProject/domains"
 	"starryProject/models"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -143,10 +144,20 @@ func (h *householdHandler) getByID(c *gin.Context) {
 func (h *householdHandler) seb(c *gin.Context) {
 	// ASSUMPTION: ELIGIBILITY = (at least one member whose occupationType = "Student" AND age > 16 years) AND total household income < 200,000
 	// ASSUMPTION: a person's age depends on whether a person's birthday has passed
-	// year, month, day := time.Now().Date()
-	// cutoffDate := time.Date(year-16, month, day, 0, 0, 0, 0, time.Local)
-	//
-	// cutoffIncome := 200000
-	// h.householdsDAO.GetSEB(cutoffDate, cutoffIncome)
+	year, month, day := time.Now().Date()
+	cutoffDate := time.Date(year-16, month, day, 0, 0, 0, 0, time.Local)
 
+	cutoffIncome := 200000
+	householdSlice, err := h.householdsDAO.GetSEB(boil.GetDB(), cutoffDate, cutoffIncome)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	var households []domains.HouseholdResp
+	for _, household := range *householdSlice {
+		households = append(households, *domains.HouseholdModelsToHouseholdResp(*household))
+	}
+	c.JSON(http.StatusOK, households)
 }
