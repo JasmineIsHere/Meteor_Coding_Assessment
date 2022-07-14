@@ -32,6 +32,7 @@ func NewHandler(householdDAO daos.HouseholdsDAO, membersDAO daos.MembersDAO) *ho
 func (h *householdHandler) RouteGroup(r *gin.Engine) {
 	rg := r.Group("/households")
 	rg.GET("/all", h.getAll)
+	rg.GET("/:householdID", h.getByID)
 	rg.POST("/", h.create)
 	rg.POST("/:householdID", h.addMember)
 }
@@ -110,7 +111,7 @@ func (h *householdHandler) getAll(c *gin.Context) {
 		return
 	}
 
-	var households []domains.HouseholdsResp
+	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
 		var members []domains.Member
 		memberSlice, err := h.membersDAO.GetByHouseholdID(boil.GetDB(), household.ID)
@@ -130,10 +131,47 @@ func (h *householdHandler) getAll(c *gin.Context) {
 				DOB:            member.Dob,
 			})
 		}
-		households = append(households, domains.HouseholdsResp{
+		households = append(households, domains.HouseholdResp{
 			Type:    household.Type,
 			Members: members,
 		})
 	}
 	c.JSON(http.StatusOK, households)
+}
+
+func (h *householdHandler) getByID(c *gin.Context) {
+	householdIDUint64, _ := strconv.ParseUint(c.Param("householdID"), 10, 64)
+	householdID := uint(householdIDUint64)
+
+	household, err := h.householdsDAO.GetByID(boil.GetDB(), householdID)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	memberSlice, err := h.membersDAO.GetByHouseholdID(boil.GetDB(), householdID)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+	var members []domains.Member
+	for _, member := range *memberSlice {
+		members = append(members, domains.Member{
+			Name:           member.Name,
+			Gender:         member.Gender,
+			MaritalStatus:  member.MaritalStatus,
+			SpouseID:       member.SpouseID,
+			OccupationType: member.OccupationType,
+			AnnualIncome:   member.AnnualIncome,
+			DOB:            member.Dob,
+		})
+	}
+
+	householdResp := domains.HouseholdResp{
+		Type:    household.Type,
+		Members: members,
+	}
+	c.JSON(http.StatusOK, householdResp)
 }

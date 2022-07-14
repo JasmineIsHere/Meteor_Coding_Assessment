@@ -4,7 +4,7 @@ type Household struct {
 	Type string `json:"type"`
 }
 
-type HouseholdsResp struct {
+type HouseholdResp struct {
 	Type    string   `json:"type"`
 	Members []Member `json:"family_members"`
 }
