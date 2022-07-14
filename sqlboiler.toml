@@ -1,0 +1,16 @@
+no-hooks=true
+no-tests=true
+add-global-variants=false
+add-panic-variants=false
+no-context=true
+no-rows-affected=false
+no-auto-timestamps=false
+no-back-referencing=true
+
+[mysql]
+dbname="meteor"
+host="the-db.c5balohade6x.ap-southeast-1.rds.amazonaws.com"
+port=3306
+user="admin"
+pass="taptaptap"
+sslmode="false"
