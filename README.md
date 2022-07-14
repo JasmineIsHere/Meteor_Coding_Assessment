@@ -49,20 +49,100 @@ GO111MODULE=on go get github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psq
 ```
 2. Run command: `sqlboiler -c sqlboiler.toml --wipe mysql`
 
+### Task 1: Create Household
+`POST http://localhost:8080/households` <br>
+
+Body: application/json <br>
+```
+{
+    "type": "Landed"
+}
+```
+
+cURL: `curl --location --request POST 'http://localhost:8080/households' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+"type": "Landed"
+}'`
+<br>
+
+### Task 2: Add a family member to household
+`POST http://localhost:8080/households/{householdId}` <br>
+
+Body: application/json <br>
+```
+{
+    "name": "Rocket",
+    "gender": "Male",
+    "marital_status": "Single",
+    "occupation_types": "Unemployed",
+    "annual_income": 10000.00,
+    "dob": "2015-07-11T00:00:00.000Z"
+}
+```
+
+cURL: `curl --location --request POST 'http://localhost:8080/households/8' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+"name": "Rocket",
+"gender": "Male",
+"marital_status": "Single",
+"occupation_types": "Unemployed",
+"annual_income": 10000.00,
+"dob": "2015-07-11T00:00:00.000Z"
+}'`
+
+#### Assumptions Made:
+   **ASSUMPTION 1:** User knows the householdID of the household they want to add a family member to. <br>
+   **ASSUMPTION 2:** Family members are added one by one into the household. So when adding couples, the first partner does not have spouseID yet as his/her partner has not been added into the DB yet. <br>
+<br>
+
+### Task 3: List all households
+`GET http://localhost:8080/households/all` <br>
+
+Body: nil <br>
+
+cURL: `curl --location --request GET 'http://localhost:8080/households/all' \
+--data-raw ''`
+
+#### Assumptions Made:
+   **ASSUMPTION 1:** The fields listed in 3b. are the fields expected to be shown in the response body <br>
+<br>
+
+### Task 4: Search for a specific household
+`GET http://localhost:8080/households/{householdId}` <br>
+
+Body: nil <br>
+
+cURL: `curl --location --request GET 'http://localhost:8080/households/8' \
+--data-raw ''`
+
+#### Assumptions Made:
+**ASSUMPTION 1:** The fields listed in 4b. are the fields expected to be shown in the response body <br>
+<br>
+
 ### Task 5: List the households and qualifying family members
 #### Assumptions Made:
 1. Student Encouragement Bonus <br>
+   `GET http://localhost:8080/grants/seb` <br>
    **ASSUMPTION 1:** ELIGIBILITY = (at least one member whose occupationType = "Student" AND age > 16 years) AND total household income < 200,000 <br>
    **ASSUMPTION 2:** a person's age depends on whether a person's birthday has passed <br>
    **ASSUMPTION 3:** Households incomes of less than $200,000 refers to the family's total annual income <br>
 <br>
 2. Multigeneration Scheme <br>
+   `GET http://localhost:8080/grants/mgs` <br>
    **ASSUMPTION 1**: ELIGIBILITY = at least ONE member whose age is < 18 or > 55 which will make everyone in the household qualified <br>
    **ASSUMPTION 2**: Households incomes of less than $150,000 refers to the family's total annual income <br>
 <br>
 3. Elder Bonus <br>
+   `GET http://localhost:8080/grants/eb` <br>
+
 <br>
 4. Baby Sunshine Grant <br>
+   `GET http://localhost:8080/grants/bsg` <br>
 <br>
 5. YOLO GST Grant <br>
-   **ASSUMPTION 1**: Households incomes of less than $100,000 refers to the family's total annual income
+   `GET http://localhost:8080/grants/yolo` <br>
+   **ASSUMPTION 1**: Households incomes of less than $100,000 refers to the family's total annual income <br>
+
+<br>
