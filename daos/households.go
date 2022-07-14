@@ -18,6 +18,7 @@ type HouseholdsDAO interface {
 	GetMGS(exec boil.Executor, youngerThan time.Time, olderThan time.Time, cutoffIncome int) (*models.HouseholdSlice, error)
 	GetEB(exec boil.Executor, olderThan time.Time, householdType string) (*models.HouseholdSlice, error)
 	GetBSG(exec boil.Executor, youngerThan time.Time) (*models.HouseholdSlice, error)
+	GetYOLO(exec boil.Executor, cutoffIncome int) (*models.HouseholdSlice, error)
 }
 
 type householdsDAO struct{}
@@ -105,6 +106,19 @@ func (dao *householdsDAO) GetBSG(exec boil.Executor, youngerThan time.Time) (*mo
 		qm.InnerJoin("member ON member.household_id = household.id"),
 		models.MemberWhere.Dob.GT(youngerThan),
 		qm.GroupBy("household.id"),
+	).All(exec)
+	if err != nil {
+		return nil, err
+	}
+	return &households, err
+}
+
+func (dao *householdsDAO) GetYOLO(exec boil.Executor, cutoffIncome int) (*models.HouseholdSlice, error) {
+	households, err := models.Households(
+		qm.Load(models.HouseholdRels.Members),
+		qm.InnerJoin("member ON member.household_id = household.id"),
+		qm.GroupBy("household.id"),
+		qm.Having("SUM(member.annual_income) < ?", cutoffIncome),
 	).All(exec)
 	if err != nil {
 		return nil, err

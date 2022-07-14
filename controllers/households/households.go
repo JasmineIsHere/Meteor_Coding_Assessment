@@ -40,11 +40,11 @@ func (h *householdHandler) RouteGroup(r *gin.Engine) {
 	rg.POST("/:householdID", h.addMember)
 
 	rgGrants := r.Group("/grants")
-	rgGrants.GET("/seb", h.seb) // Student Encouragement Bonus
-	rgGrants.GET("/mgs", h.mgs) // Multi-Generation Scheme
-	rgGrants.GET("/eb", h.eb)   // Elder Bonus
-	rgGrants.GET("/bsg", h.bsg) // Baby Sunshine Grant
-	// rgGrants.GET("/yolo", h.yolo) // YOLO GST Grant
+	rgGrants.GET("/seb", h.seb)   // Student Encouragement Bonus
+	rgGrants.GET("/mgs", h.mgs)   // Multi-Generation Scheme
+	rgGrants.GET("/eb", h.eb)     // Elder Bonus
+	rgGrants.GET("/bsg", h.bsg)   // Baby Sunshine Grant
+	rgGrants.GET("/yolo", h.yolo) // YOLO GST Grant
 }
 
 func (h *householdHandler) create(c *gin.Context) {
@@ -146,6 +146,8 @@ func (h *householdHandler) getByID(c *gin.Context) {
 func (h *householdHandler) seb(c *gin.Context) {
 	// ASSUMPTION: ELIGIBILITY = (at least one member whose occupationType = "Student" AND age > 16 years) AND total household income < 200,000
 	// ASSUMPTION: a person's age depends on whether a person's birthday has passed
+	// ASSUMPTION: Households incomes of less than $200,000 refers to the family's total annual income
+
 	year, month, day := time.Now().Date()
 	cutoffDate := time.Date(year-16, month, day, 0, 0, 0, 0, time.Local)
 
@@ -166,6 +168,7 @@ func (h *householdHandler) seb(c *gin.Context) {
 
 func (h *householdHandler) mgs(c *gin.Context) {
 	// ASSUMPTION: ELIGIBILITY = at least ONE member whose age is < 18 or > 55 which will make everyone in the household qualified
+	// ASSUMPTION: Households incomes of less than $150,000 refers to the family's total annual income
 	year, month, day := time.Now().Date()
 	minDate := time.Date(year-18, month, day, 0, 0, 0, 0, time.Local)
 	maxDate := time.Date(year-55, month, day, 0, 0, 0, 0, time.Local)
@@ -215,6 +218,23 @@ func (h *householdHandler) bsg(c *gin.Context) {
 	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
 		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, null.TimeFrom(minDate), null.Time{}, null.Bool{}))
+	}
+	c.JSON(http.StatusOK, households)
+}
+
+func (h *householdHandler) yolo(c *gin.Context) {
+	// ASSUMPTION: Households incomes of less than $100,000 refers to the family's total annual income
+	cutoffIncome := 100000
+	householdSlice, err := h.householdsDAO.GetYOLO(boil.GetDB(), cutoffIncome)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	var households []domains.HouseholdResp
+	for _, household := range *householdSlice {
+		households = append(households, *domains.HouseholdModelsToHouseholdResp(*household))
 	}
 	c.JSON(http.StatusOK, households)
 }
