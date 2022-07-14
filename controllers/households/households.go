@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
@@ -157,11 +158,28 @@ func (h *householdHandler) seb(c *gin.Context) {
 
 	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
-		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, cutoffDate, "<"))
+		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, null.TimeFrom(cutoffDate), null.Time{}, null.Bool{}))
 	}
 	c.JSON(http.StatusOK, households)
 }
 
 func (h *householdHandler) mgs(c *gin.Context) {
+	// ASSUMPTION: ELIGIBILITY = at least ONE member whose age is < 18 or > 55 which will make everyone in the household qualified
+	year, month, day := time.Now().Date()
+	minDate := time.Date(year-18, month, day, 0, 0, 0, 0, time.Local)
+	maxDate := time.Date(year-55, month, day, 0, 0, 0, 0, time.Local)
 
+	cutoffIncome := 150000
+	householdSlice, err := h.householdsDAO.GetMGS(boil.GetDB(), minDate, maxDate, cutoffIncome)
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	var households []domains.HouseholdResp
+	for _, household := range *householdSlice {
+		households = append(households, *domains.HouseholdModelsToHouseholdResp(*household))
+	}
+	c.JSON(http.StatusOK, households)
 }

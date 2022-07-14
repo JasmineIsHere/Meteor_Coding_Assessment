@@ -2,7 +2,8 @@ package domains
 
 import (
 	"starryProject/models"
-	"time"
+
+	"github.com/volatiletech/null/v8"
 )
 
 type Household struct {
@@ -36,23 +37,23 @@ func HouseholdModelsToHouseholdResp(household models.Household) *HouseholdResp {
 	}
 }
 
-func HouseholdModelsToHouseholdRespAgeFilter(household models.Household, cutoffDate time.Time, inequality string) *HouseholdResp {
+func HouseholdModelsToHouseholdRespAgeFilter(household models.Household, minDate null.Time, maxDate null.Time, isOverlap null.Bool) *HouseholdResp {
 	memberSlice := household.R.Members
 
 	var members []Member
 	var toAdd bool
 	for _, member := range memberSlice {
 
-		if inequality == "<" && member.Dob.After(cutoffDate) {
-			toAdd = true
-		} else if inequality == "<=" && (member.Dob.After(cutoffDate) || member.Dob.Equal(cutoffDate)) {
-			toAdd = true
-		} else if inequality == ">" && member.Dob.Before(cutoffDate) {
-			toAdd = true
-		} else if inequality == ">=" && (member.Dob.Before(cutoffDate) || member.Dob.Equal(cutoffDate)) {
-			toAdd = true
-		} else {
+		if !minDate.IsZero() && !maxDate.IsZero() && (!isOverlap.IsZero() && isOverlap.Bool == true) && (member.Dob.After(minDate.Time) || member.Dob.Before(maxDate.Time)) {
 			toAdd = false
+		} else if !minDate.IsZero() && !maxDate.IsZero() && (!isOverlap.IsZero() && isOverlap.Bool == false) && (member.Dob.Before(minDate.Time) && member.Dob.After(maxDate.Time)) {
+			toAdd = false
+		} else if !minDate.IsZero() && maxDate.IsZero() && member.Dob.Before(minDate.Time) {
+			toAdd = false
+		} else if minDate.IsZero() && !maxDate.IsZero() && member.Dob.After(maxDate.Time) {
+			toAdd = false
+		} else {
+			toAdd = true
 		}
 
 		if toAdd == true {

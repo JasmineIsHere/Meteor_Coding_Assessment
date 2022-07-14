@@ -15,6 +15,7 @@ type HouseholdsDAO interface {
 	GetAll(exec boil.Executor) (*models.HouseholdSlice, error)
 	GetByID(exec boil.Executor, householdID uint) (*models.Household, error)
 	GetSEB(exec boil.Executor, cutoffDate time.Time, cutoffIncome int) (*models.HouseholdSlice, error)
+	GetMGS(exec boil.Executor, youngerThan time.Time, olderThan time.Time, cutoffIncome int) (*models.HouseholdSlice, error)
 }
 
 type householdsDAO struct{}
@@ -58,6 +59,21 @@ func (dao *householdsDAO) GetSEB(exec boil.Executor, cutoffDate time.Time, cutof
 		qm.InnerJoin("member ON member.household_id = household.id"),
 		models.MemberWhere.OccupationType.EQ(occupation_types.STUDENT.String()),
 		models.MemberWhere.Dob.GT(cutoffDate),
+		qm.GroupBy("household.id"),
+		qm.Having("SUM(member.annual_income) < ?", cutoffIncome),
+	).All(exec)
+	if err != nil {
+		return nil, err
+	}
+	return &households, err
+}
+
+func (dao *householdsDAO) GetMGS(exec boil.Executor, youngerThan time.Time, olderThan time.Time, cutoffIncome int) (*models.HouseholdSlice, error) {
+	households, err := models.Households(
+		qm.Load(models.HouseholdRels.Members),
+		qm.InnerJoin("member ON member.household_id = household.id"),
+		models.MemberWhere.Dob.GT(youngerThan),
+		qm.Or("member.dob < ?", olderThan),
 		qm.GroupBy("household.id"),
 		qm.Having("SUM(member.annual_income) < ?", cutoffIncome),
 	).All(exec)
