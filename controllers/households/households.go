@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"starryProject/daos"
 	"starryProject/domains"
+	"starryProject/enums/household_types"
 	"starryProject/models"
 	"strconv"
 	"time"
@@ -41,7 +42,7 @@ func (h *householdHandler) RouteGroup(r *gin.Engine) {
 	rgGrants := r.Group("/grants")
 	rgGrants.GET("/seb", h.seb) // Student Encouragement Bonus
 	rgGrants.GET("/mgs", h.mgs) // Multi-Generation Scheme
-	// rgGrants.GET("/eb", h.eb)     // Elder Bonus
+	rgGrants.GET("/eb", h.eb)   // Elder Bonus
 	// rgGrants.GET("/bsg", h.bsg)   // Baby Sunshine Grant
 	// rgGrants.GET("/yolo", h.yolo) // YOLO GST Grant
 }
@@ -180,6 +181,23 @@ func (h *householdHandler) mgs(c *gin.Context) {
 	var households []domains.HouseholdResp
 	for _, household := range *householdSlice {
 		households = append(households, *domains.HouseholdModelsToHouseholdResp(*household))
+	}
+	c.JSON(http.StatusOK, households)
+}
+
+func (h *householdHandler) eb(c *gin.Context) {
+	year, month, day := time.Now().Date()
+	maxDate := time.Date(year-55, month, day, 0, 0, 0, 0, time.Local)
+	householdSlice, err := h.householdsDAO.GetEB(boil.GetDB(), maxDate, household_types.HDB.String())
+	if err != nil {
+		c.Error(err)
+		c.JSON(http.StatusNotFound, c.Errors.Last())
+		return
+	}
+
+	var households []domains.HouseholdResp
+	for _, household := range *householdSlice {
+		households = append(households, *domains.HouseholdModelsToHouseholdRespAgeFilter(*household, null.Time{}, null.TimeFrom(maxDate), null.Bool{}))
 	}
 	c.JSON(http.StatusOK, households)
 }
