@@ -131,6 +131,7 @@ cURL: `curl --location --request GET 'http://localhost:8080/households/8' \
 <br>
 2. Multigeneration Scheme <br>
    `GET http://localhost:8080/grants/mgs` <br>
+   
    **ASSUMPTION 1**: ELIGIBILITY = at least ONE member whose age is < 18 or > 55 which will make everyone in the household qualified <br>
    **ASSUMPTION 2**: Households incomes of less than $150,000 refers to the family's total annual income <br>
 <br>
@@ -143,6 +144,7 @@ cURL: `curl --location --request GET 'http://localhost:8080/households/8' \
 <br>
 5. YOLO GST Grant <br>
    `GET http://localhost:8080/grants/yolo` <br>
+   
    **ASSUMPTION 1**: Households incomes of less than $100,000 refers to the family's total annual income <br>
 
 <br>
